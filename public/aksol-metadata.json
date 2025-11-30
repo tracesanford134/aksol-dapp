@@ -1,0 +1,13 @@
+{
+  "name": "AKSOL",
+  "symbol": "AKSOL",
+  "description": "AKSOL is the native utility token of Alaska Crypto Financial, built on Solana for smarter, tax-aware transactions.",
+  "image": "https://aksolappv1.netlify.app/acf-logo.png",
+  "external_url": "https://alaskacrypto.financial",
+  "attributes": [
+    { "trait_type": "Region", "value": "Alaska" },
+    { "trait_type": "Project", "value": "Alaska Crypto Financial" },
+    { "trait_type": "Token Type", "value": "Utility" }
+  ]
+}
+
