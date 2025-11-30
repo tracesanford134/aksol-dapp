@@ -104,8 +104,9 @@ function PurchaseCard({ publicMode, logAction }: PurchaseCardProps) {
     ? `${lastSig.slice(0, 4)}…${lastSig.slice(-4)}`
     : null;
 
-  return (
-    <section className="card">
+
+return (
+  <section className="card card-zero">
       <h2>0% route (demo purchase)</h2>
       <small>
         This demo flow sends SOL to the designated 0% route wallet with{" "}
