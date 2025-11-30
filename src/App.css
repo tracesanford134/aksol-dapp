@@ -1,0 +1,659 @@
+/* === ROOT APP LAYOUT === */
+.app-root {
+  min-height: 100vh;
+  padding: 1.5rem 1.75rem 2.5rem;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text",
+    "Segoe UI", sans-serif;
+  background:
+    radial-gradient(circle at top left, #0f172a 0%, #020617 55%, #020617 100%),
+    radial-gradient(circle at bottom right, #111827 0%, #020617 60%, #000000 100%);
+  color: #e5e7eb;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+/* === HEADER / NAVBAR === */
+.app-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 4px 14px;  /* more vertical breathing room */
+  gap: 20px;               /* space between left + right clusters */
+}
+
+.app-nav-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;               /* small gap (no logo now, just text) */
+}
+
+/* Logo image in the dapp header */
+.app-logo {
+  height: 180px;
+  width: auto;
+  display: block;
+}
+
+.app-nav-text h1 {
+  margin: 0;
+  font-size: 1.85rem;      /* 🔥 larger, easy to read */
+  font-weight: 700;
+  letter-spacing: 0.03em;
+}
+
+.app-nav-text p {
+  margin: 6px 0 0;
+  font-size: 1.02rem;      /* slightly bigger subtitle */
+  color: #9ca3af;
+  opacity: 0.98;
+}
+
+
+/* RIGHT SIDE: toggle + status + wallet in one row */
+.app-nav-right {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  flex-wrap: nowrap; /* keep everything on one line */
+}
+
+/* Make header buttons + wallet button share pill shape/size */
+.app-nav-right > button,
+.app-wallet .wallet-adapter-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 16px;
+  height: 36px;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+
+/* Base style for header pills (toggle + status) */
+.app-nav-right > button {
+  border: 1px solid rgba(148, 163, 184, 0.7);
+  background: rgba(15, 23, 42, 0.96);
+  color: #e5e7eb;
+  cursor: pointer;
+  transition:
+    border-color 0.12s ease-out,
+    box-shadow 0.12s ease-out,
+    transform 0.06s ease-out,
+    background 0.12s ease-out;
+}
+/* Give header pills the same hover/active feel as the wallet button */
+.app-nav-right > button:hover:not([disabled]) {
+  border-color: #22c55e;
+  box-shadow: 0 16px 36px rgba(34, 197, 94, 0.35);
+  background: radial-gradient(circle at top, #020617, #022c22);
+  transform: translateY(-1px);
+}
+
+.app-nav-right > button:active:not([disabled]) {
+  transform: translateY(0);
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.9);
+}
+
+
+/* Wallet adapter button rounding to match chips */
+.app-wallet .wallet-adapter-button {
+  border-radius: 999px;
+  font-size: 0.8rem;
+}
+
+/* Pub / Dev view toggle (button *1) */
+.app-view-toggle {
+  font-size: 0.78rem;
+}
+
+/* Dev View active: green/teal glow */
+.app-view-toggle-dev {
+  background: linear-gradient(to right, #22c55e, #22d3ee);
+  border-color: #22c55e;
+  color: #020617;
+  box-shadow: 0 10px 24px rgba(34, 211, 238, 0.35);
+  transform: translateY(-1px);
+}
+
+/* Optional: legacy toggle styles (kept in case other components use them) */
+.app-view-toggle-active {
+  border-color: #22c55e;
+  box-shadow: 0 8px 20px rgba(34, 197, 94, 0.3);
+  transform: translateY(-1px);
+}
+
+.app-toggle-button {
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  border: 1px solid rgba(148, 163, 184, 0.9);
+  cursor: pointer;
+  transition: all 0.12s ease-out;
+}
+
+.app-toggle-on {
+  background: linear-gradient(to right, #22c55e, #22d3ee);
+  color: #020617;
+  box-shadow: 0 10px 24px rgba(34, 211, 238, 0.35);
+}
+
+.app-toggle-off {
+  background: rgba(15, 23, 42, 0.96);
+  color: #e5e7eb;
+  border-color: rgba(75, 85, 99, 0.9);
+}
+
+/* Status chip for "Solana · devnet" */
+.app-status-chip {
+  opacity: 0.9;
+  cursor: default;
+}
+
+/* Cluster pill (if used inside cards) */
+.cluster-pill {
+  padding: 0.25rem 0.7rem;
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.6);
+  font-size: 0.75rem;
+  color: #e5e7eb;
+  background: radial-gradient(circle at top, rgba(15, 23, 42, 0.9), #020617);
+}
+
+/* === SUBHEADER STRIP === */
+.app-subheader {
+  max-width: 1100px;
+  margin: 0 auto;
+  border-radius: 0.9rem;
+  padding: 0.9rem 1.1rem;
+  border: 1px solid rgba(55, 65, 81, 0.9);
+  background: linear-gradient(
+    135deg,
+    rgba(15, 23, 42, 0.96),
+    rgba(8, 47, 73, 0.96)
+  );
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.app-subheader h2 {
+  margin: 0 0 0.2rem;
+  font-size: 1rem;
+}
+
+.app-subheader p {
+  margin: 0;
+  font-size: 0.8rem;
+  color: #9ca3af;
+}
+
+.subheader-tagline {
+  font-size: 0.8rem;
+  color: #c4ffdd;
+  text-align: right;
+  white-space: nowrap;
+}
+
+/* === CARD GRID LAYOUT: 2 ON TOP, 3 ON BOTTOM === */
+
+/* Optional helper layout (if you use card-layout/card-row anywhere else) */
+.card-layout {
+  max-width: 1100px;
+  margin: 0.2rem auto 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.card-row {
+  display: grid;
+  gap: 1rem;
+}
+
+.card-row-top {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.card-row-bottom {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+@media (max-width: 800px) {
+  .card-row-top,
+  .card-row-bottom {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Main dashboard grid:
+   1: WalletOverview (top row, spans cols 1–2)
+   2: ActivityCard   (top row, col 3)
+   3: StatusCard     (bottom row, col 1)
+   4: TaxedSendCard  (bottom row, col 2)
+   5: PurchaseCard   (bottom row, col 3)
+*/
+/* === AKSOL dashboard card layout: 2 on top, 3 equal on bottom === */
+.card-grid {
+  max-width: 1100px;
+  margin: 0.75rem auto 0 auto;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr)); /* 3 equal columns */
+  column-gap: 1.4rem;     /* side-to-side spacing */
+  row-gap: 1.4rem;        /* 🔽 smaller gap between top & bottom rows */
+  align-items: stretch;
+}
+
+/* Top row: WalletOverview (1) spans 2 cols, ActivityCard (2) sits in col 3 */
+.card-grid > :nth-child(1) {
+  grid-column: 1 / span 2;
+  grid-row: 1;
+}
+
+.card-grid > :nth-child(2) {
+  grid-column: 3;
+  grid-row: 1;
+}
+
+/* Bottom row: Status, Taxed send, 0% buy – 3 equal-width cards */
+.card-grid > :nth-child(3) {
+  grid-column: 1;
+  grid-row: 2;
+}
+
+.card-grid > :nth-child(4) {
+  grid-column: 2;
+  grid-row: 2;
+}
+
+.card-grid > :nth-child(5) {
+  grid-column: 3;
+  grid-row: 2;
+}
+
+/* Stack on smaller screens */
+@media (max-width: 900px) {
+  .card-grid {
+    grid-template-columns: minmax(0, 1fr);
+    column-gap: 0;
+    row-gap: 1.25rem;
+  }
+
+  .card-grid > * {
+    grid-column: 1 !important;
+    grid-row: auto !important;
+  }
+}
+
+/* === CARD STYLING === */
+.card {
+  background: radial-gradient(circle at top, #020617, #020617 30%, #020617 100%);
+  border-radius: 0.9rem;
+  padding: 1.25rem 1.3rem;
+  border: 1px solid rgba(55, 65, 81, 0.95);
+  box-shadow:
+    0 20px 60px rgba(15, 23, 42, 0.95),
+    0 0 0 1px rgba(15, 23, 42, 0.5);
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.card::before {
+  content: "";
+  position: absolute;
+  inset: -60%;
+  background: radial-gradient(
+    circle at top right,
+    rgba(56, 189, 248, 0.12),
+    transparent 60%
+  );
+  opacity: 0;
+  transition: opacity 0.25s ease-out;
+  pointer-events: none;
+}
+
+.card:hover::before {
+  opacity: 1;
+}
+
+.card h2 {
+  margin: 0;
+  font-size: 1.05rem;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.card h2::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: linear-gradient(to right, #22c55e, #0ea5e9);
+}
+
+.card small {
+  font-size: 0.78rem;
+  color: #9ca3af;
+}
+
+/* Form fields inside cards – cleaner spacing */
+.card form {
+  margin-top: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;  /* space between Recipient block and Amount block */
+}
+
+.field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;  /* label + helper + input stay tight together */
+  margin: 0;
+}
+
+.field-group label {
+  font-size: 0.78rem;
+  color: #cbd5f5;
+}
+
+/* Helper text like "Paste a devnet wallet address" */
+.field-group small {
+  font-size: 0.72rem;
+  color: #9ca3af;
+}
+
+.field-group input,
+.field-group select {
+  border-radius: 0.5rem;
+  border: 1px solid rgba(148, 163, 184, 0.6);
+  padding: 0.45rem 0.55rem;
+  background: rgba(15, 23, 42, 0.96);
+  color: #e5e7eb;
+  font-size: 0.85rem;
+}
+
+.field-group input::placeholder {
+  color: #6b7280;
+}
+
+/* Buttons inside cards */
+.card button {
+  align-self: flex-start;
+  border-radius: 999px;
+  border: none;
+  padding: 0.42rem 0.9rem;
+  font-size: 0.82rem;
+  font-weight: 500;
+  cursor: pointer;
+  background: linear-gradient(90deg, #22c55e, #0ea5e9);
+  color: #020617;
+  margin-top: 0.12rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  transition:
+    transform 0.12s ease-out,
+    box-shadow 0.12s ease-out,
+    opacity 0.12s ease-out;
+  box-shadow: 0 10px 30px rgba(34, 197, 94, 0.35);
+}
+
+.card button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 16px 40px rgba(34, 197, 94, 0.4);
+}
+
+.card button:disabled {
+  opacity: 0.6;
+  cursor: default;
+  box-shadow: none;
+}
+
+/* Space between primary button and its helper text */
+.card button + small {
+  margin-left: 0.5rem;
+}
+
+/* Status messages and JSON box */
+.status-ok {
+  color: #4ade80;
+  font-size: 0.8rem;
+}
+
+.status-error {
+  color: #fb7185;
+  font-size: 0.8rem;
+}
+
+.card pre {
+  background: rgba(15, 23, 42, 0.96);
+  border-radius: 0.6rem;
+  padding: 0.55rem 0.7rem;
+  font-size: 0.72rem;
+  max-height: 260px;
+  overflow: auto;
+  border: 1px solid rgba(37, 99, 235, 0.5);
+  margin-top: 0.3rem;
+}
+
+/* === FOOTER === */
+.app-footer {
+  max-width: 1100px;
+  margin: 3rem auto 0 auto; /* extra breathing room above footer */
+  font-size: 0.78rem;
+  color: #6b7280;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  align-items: center;
+}
+
+.app-footer .dot {
+  opacity: 0.6;
+}
+
+.accent {
+  color: #a5f3fc;
+}
+
+/* Shared styling for "last tx + explorer link" across cards */
+.tx-meta {
+  margin-top: 0.5rem;
+  font-size: 0.8rem;
+  color: #9ca3af;
+}
+
+.tx-meta-label {
+  display: block;
+}
+
+/* Explorer links */
+.wallet-overview-link a {
+  margin-top: 0.2rem;
+  display: inline-block;
+  font-size: 0.75rem;
+  color: #38bdf8;
+  text-decoration: underline;
+}
+
+.wallet-overview-link a:hover {
+  text-decoration: none;
+}
+
+/* === WALLET OVERVIEW CARD === */
+.wallet-overview {
+  display: flex;
+  justify-content: space-between;
+  gap: 1.2rem;
+  align-items: flex-start;
+}
+
+.wallet-overview-main {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.2rem;
+}
+
+.wallet-metric {
+  min-width: 140px;
+}
+
+.wallet-metric-label {
+  font-size: 0.78rem;
+  color: #9ca3af;
+}
+
+.wallet-metric-value {
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin-top: 0.1rem;
+}
+
+.wallet-metric-sub {
+  font-size: 0.74rem;
+  color: #6b7280;
+  margin-top: 0.1rem;
+}
+
+.wallet-overview-right {
+  text-align: right;
+  font-size: 0.78rem;
+  color: #9ca3af;
+}
+
+.wallet-overview-label-row {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.4rem;
+  margin-bottom: 0.2rem;
+}
+
+/* Copy button in WalletOverview – navy base + green border accent */
+.copy-button {
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.7);  /* neutral border by default */
+  padding: 0.18rem 0.55rem;
+  font-size: 0.72rem;
+  background: #0b1120; /* deep navy base */
+  color: #e5e7eb;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  transition:
+    border-color 0.12s ease-out,
+    box-shadow 0.12s ease-out,
+    background 0.12s ease-out,
+    transform 0.06s ease-out;
+}
+
+.copy-button:hover {
+  border-color: #22c55e;  /* 💚 green accent on hover */
+  background: linear-gradient(135deg, #0f172a, #1f2937);
+  box-shadow: 0 8px 18px rgba(34, 197, 94, 0.35);
+  transform: translateY(-0.5px);
+}
+
+.copy-button:active {
+  border-color: #16a34a;  /* slightly deeper green when pressed */
+  background: #020617;
+  transform: translateY(0);
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.9);
+}
+
+.wallet-overview-address {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+    "Liberation Mono", "Courier New", monospace;
+  font-size: 0.75rem;
+  margin-top: 0.1rem;
+  word-break: break-all;
+  color: #e5e7eb;
+}
+
+.wallet-overview-activity {
+  margin-top: 0.2rem;
+  font-size: 0.75rem;
+  color: #9ca3af;
+}
+
+.wallet-overview-msg {
+  max-width: 260px;
+}
+
+/* === WalletConnect button – refined pill style === */
+.app-wallet .wallet-adapter-button,
+.wallet-adapter-button-trigger {
+  border-radius: 999px !important;
+  padding: 0.35rem 1.15rem !important;
+  font-size: 0.78rem !important;
+  font-weight: 500 !important;
+  letter-spacing: 0.02em;
+  background: radial-gradient(circle at top, #020617, #020617 55%, #020617 100%) !important;
+  border: 1px solid rgba(148, 163, 184, 0.9) !important;
+  color: #e5e7eb !important;
+  box-shadow: 0 10px 26px rgba(15, 23, 42, 0.9) !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 0.35rem !important; /* space between icon + text */
+}
+
+/* Hover + active states */
+.wallet-adapter-button-trigger:hover:not([disabled]),
+.app-wallet .wallet-adapter-button:hover:not([disabled]) {
+  border-color: #22c55e !important;
+  box-shadow: 0 16px 36px rgba(34, 197, 94, 0.4) !important;
+  background: radial-gradient(circle at top, #020617, #022c22) !important;
+  transform: translateY(-1px);
+}
+
+.wallet-adapter-button-trigger:active:not([disabled]),
+.app-wallet .wallet-adapter-button:active:not([disabled]) {
+  transform: translateY(0);
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.9) !important;
+}
+
+/* === RESPONSIVE TWEAKS === */
+@media (max-width: 768px) {
+  .app-root {
+    padding: 1rem 1rem 2rem;
+  }
+
+  .app-nav {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .app-nav-right {
+    align-self: stretch;
+    justify-content: flex-start;
+  }
+
+  .app-subheader {
+    flex-direction: column;
+  }
+
+  .subheader-tagline {
+    text-align: left;
+    white-space: normal;
+  }
+
+  .wallet-overview {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .wallet-overview-right {
+    text-align: left;
+  }
+}
