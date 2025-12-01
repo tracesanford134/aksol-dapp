@@ -1,75 +1,69 @@
 import type { FormEvent } from "react";
 import { useState } from "react";
-import { Connection, Transaction } from "@solana/web3.js";
-import { useWallet } from "@solana/wallet-adapter-react";
+import { useConnection, useWallet } from "@solana/wallet-adapter-react";
+import { Transaction } from "@solana/web3.js";
 import type { AksolNetworkConfig } from "../networkConfig";
 
-interface TaxedSendCardProps {
+type TaxedSendCardProps = {
   publicMode: boolean;
   logAction: (label: string, signature?: string) => void;
+  isMainnet: boolean;
   networkConfig: AksolNetworkConfig;
-  backendBaseUrl?: string;
-  explorerBaseUrl?: string;
   walletPublicKey: string | null;
-}
+};
 
-// Helper: decode base64 → Uint8Array in browser
-function decodeBase64ToBytes(b64: string): Uint8Array {
-  const binary = atob(b64);
-  const len = binary.length;
-  const bytes = new Uint8Array(len);
-  for (let i = 0; i < len; i++) {
-    bytes[i] = binary.charCodeAt(i);
-  }
-  return bytes;
-}
-
-export default function TaxedSendCard({
+function TaxedSendCard({
   publicMode,
   logAction,
+  isMainnet,
   networkConfig,
-  backendBaseUrl,
-  explorerBaseUrl,
   walletPublicKey,
 }: TaxedSendCardProps) {
-  const { sendTransaction } = useWallet();
+  const { connection } = useConnection();
+  const wallet = useWallet();
 
   const [toAddress, setToAddress] = useState("");
   const [amountUi, setAmountUi] = useState("");
-  const [txSig, setTxSig] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [txSig, setTxSig] = useState<string | null>(null);
 
-  const isMainnet = networkConfig.name === "mainnet-beta";
+  const backendBaseUrl =
+    import.meta.env.VITE_BACKEND_BASE_URL || "http://localhost:8080";
+  const explorerBaseUrl =
+    import.meta.env.VITE_EXPLORER_BASE_URL || "https://explorer.solana.com";
+
+  const cluster = isMainnet ? "mainnet-beta" : "devnet";
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError(null);
     setTxSig(null);
 
-    if (!backendBaseUrl) {
-      const msg = "Backend URL is not configured.";
-      setError(msg);
-      logAction("Taxed send failed: backend URL not set");
-      return;
-    }
-
-    if (!walletPublicKey) {
-      const msg = "Connect a wallet before using the taxed send route.";
+    if (!wallet.connected || !wallet.publicKey) {
+      const msg = "Connect a wallet before sending with tax.";
       setError(msg);
       logAction("Taxed send failed: no wallet connected");
       return;
     }
 
-    if (!toAddress || !amountUi) {
-      const msg = "Enter a destination address and amount.";
+    if (!wallet.signTransaction) {
+      const msg = "Current wallet does not support transaction signing.";
       setError(msg);
+      logAction("Taxed send failed: wallet cannot sign");
       return;
     }
 
     const parsedAmount = Number(amountUi);
+
     if (!Number.isFinite(parsedAmount) || parsedAmount <= 0) {
       const msg = "Amount must be a positive number.";
+      setError(msg);
+      return;
+    }
+
+    if (!toAddress || toAddress.trim().length < 8) {
+      const msg = "AKSOL recipient address looks incomplete.";
       setError(msg);
       return;
     }
@@ -77,15 +71,14 @@ export default function TaxedSendCard({
     setLoading(true);
 
     try {
-      // 1. Ask backend to prepare the taxed transfer
       const resp = await fetch(`${backendBaseUrl}/aksol/send-taxed-tx`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          fromPubkey: walletPublicKey,
-          toPubkey: toAddress,
+          fromPubkey: wallet.publicKey.toBase58(),
+          toPubkey: toAddress.trim(),
           amountUi: parsedAmount,
-          cluster: networkConfig.name, // "devnet" or "mainnet-beta"
+          cluster,
         }),
       });
 
@@ -96,32 +89,41 @@ export default function TaxedSendCard({
       const data = await resp.json();
       console.log("Backend /aksol/send-taxed-tx response:", data);
 
-      // === CASE A: backend already broadcasted and returns a signature ===
+      // CASE A: backend already broadcasted and returns a signature
       let signature: string | undefined =
-        data.signature || data.txSignature || data.transactionSignature;
+        data.signature ||
+        data.txSignature ||
+        data.transactionSignature ||
+        data.sig;
 
-      if (!signature) {
-        // === CASE B: backend returns a serialized transaction we must sign+send ===
-        const base64Tx: string | undefined =
-          data.transaction || data.tx || data.txBase64 || data.serializedTx;
-
-        if (!base64Tx) {
-          throw new Error(
-            "Backend did not return a signature or transaction. Check server logs."
-          );
-        }
-
-        const rawTx = decodeBase64ToBytes(base64Tx);
-        const tx = Transaction.from(rawTx);
-
-        const connection = new Connection(networkConfig.rpcUrl, "confirmed");
-        signature = await sendTransaction(tx, connection);
+      if (signature) {
+        setTxSig(signature);
+        const modeLabel = isMainnet ? "MAINNET" : "devnet";
+        logAction(`Taxed send (${modeLabel})`, signature);
+        return;
       }
 
-      setTxSig(signature);
+      // CASE B: backend returns a serialized transaction we must sign+send
+      const base64Tx: string | undefined =
+        data.transaction || data.tx || data.txBase64 || data.serializedTx;
 
+      if (!base64Tx) {
+        throw new Error(
+          "Backend did not return a signature or transaction. Check console logs for full response."
+        );
+      }
+
+      const tx = Transaction.from(Buffer.from(base64Tx, "base64"));
+
+      tx.feePayer = wallet.publicKey;
+
+      const signed = await wallet.signTransaction(tx);
+      const sig = await connection.sendRawTransaction(signed.serialize());
+      await connection.confirmTransaction(sig, "confirmed");
+
+      setTxSig(sig);
       const modeLabel = isMainnet ? "MAINNET" : "devnet";
-      logAction(`Taxed send (${modeLabel})`, signature);
+      logAction(`Taxed send (${modeLabel})`, sig);
     } catch (err: any) {
       console.error("Taxed send error:", err);
       const msg =
@@ -137,102 +139,133 @@ export default function TaxedSendCard({
 
   const trimmedSig = txSig ? `${txSig.slice(0, 4)}…${txSig.slice(-4)}` : null;
 
-  const explorerBase =
-    explorerBaseUrl && explorerBaseUrl.length > 0
-      ? explorerBaseUrl
-      : "https://explorer.solana.com";
-
-  const clusterQuery =
-    networkConfig.name === "devnet" ? "?cluster=devnet" : "";
-
   return (
+    <section className="card card-taxed">
+      {/* Header with pill */}
+      <header
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          gap: "0.4rem",
+          marginBottom: "0.35rem",
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: "0.75rem",
+          }}
+        >
+          <h2 style={{ margin: 0 }}>Send AKSOL with tax (3%)</h2>
 
-  <section className="card card-taxed">
-      {/* Header with green dot + pill */}
-<header
-  style={{
-    display: "flex",
-    flexDirection: "column",
-    gap: "0.4rem",
-    marginBottom: "0.35rem",
-  }}
->
-  <div
-    style={{
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "space-between",
-      gap: "0.75rem",
-    }}
-  >
-    <h2 style={{ margin: 0 }}>Send AKSOL with tax (3%)</h2>
-    <span className="card-pill">
-      {networkConfig.label}
-      {publicMode ? " · Public" : " · Dev"}
-    </span>
-  </div>
+          <span className="card-pill">
+            {networkConfig.label}
+            {publicMode ? " · Public" : " · Dev"}
+          </span>
+        </div>
 
-  {isMainnet && (
-    <div className="card-warning">
-      MAINNET ACTIVE – This uses real funds. Start with a tiny test amount
-      (e.g. 0.1 AKSOL) and double-check the destination address.
-    </div>
-  )}
-</header>
+        {isMainnet && (
+          <div className="card-warning">
+            MAINNET ACTIVE – This uses real funds. Start with a tiny test amount
+            (e.g. 0.1 AKSOL) and double-check the destination address.
+          </div>
+        )}
+      </header>
 
       {/* Intro copy */}
-      <small>
-        This flow applies the standard AKSOL tax (currently{" "}
-        <strong>3%</strong>) and routes fees into the buyback, liquidity, and
-        staking wallets configured on-chain.
+      <small
+        style={{
+          display: "block",
+          marginTop: "0.15rem",
+          marginBottom: "0.5rem",
+          fontSize: "0.75rem",
+          color: "#9ca3af",
+        }}
+      >
+        {isMainnet ? (
+          <>
+            <strong>Mainnet demo:</strong> this card currently sends a small
+            amount of <strong>SOL</strong> and applies the standard{" "}
+            <strong>3% protocol tax</strong>, routed into the on-chain buyback,
+            liquidity, and staking wallets from your AKSOL config. In a future
+            upgrade, this flow will route <strong>AKSOL tokens</strong> instead
+            of SOL on mainnet.
+          </>
+        ) : (
+          <>
+            <strong>Devnet test:</strong> uses SOL on devnet to exercise the
+            same 3% tax logic with test funds only. Safe to experiment here
+            before touching mainnet, while the underlying config mirrors your
+            AKSOL mainnet setup.
+          </>
+        )}
       </small>
 
-      {/* Form – button markup stays the same style as your 0% card */}
-<form onSubmit={handleSubmit} className="stacked-form">
-  <label className="field">
-    <span>(AKSOL) recipient</span>
-    <input
-      type="text"
-      placeholder="Wallet address to receive AKSOL"
-      value={toAddress}
-      onChange={(e) => setToAddress(e.target.value)}
-    />
-  </label>
+      {walletPublicKey && (
+        <small
+          style={{
+            display: "block",
+            marginBottom: "0.5rem",
+            fontSize: "0.7rem",
+            color: "#6b7280",
+          }}
+        >
+          Connected wallet:{" "}
+          <code>
+            {walletPublicKey.slice(0, 4)}…{walletPublicKey.slice(-4)}
+          </code>
+        </small>
+      )}
 
-  <label className="field">
-    <span>(AKSOL) amount</span>
-    <input
-      type="number"
-      min="0"
-      step="0.000001"
-      placeholder="0.10"
-      value={amountUi}
-      onChange={(e) => setAmountUi(e.target.value)}
-    />
-  </label>
+      {/* FORM */}
+      <form onSubmit={handleSubmit} className="stacked-form">
+        <label className="field">
+          <span className="field-label">AKSOL recipient</span>
+          <input
+            type="text"
+            placeholder="Enter AKSOL wallet address"
+            value={toAddress}
+            onChange={(e) => setToAddress(e.target.value)}
+          />
+        </label>
 
-  <button type="submit" disabled={loading}>
-    {loading
-      ? isMainnet
-        ? "Sending taxed tx on MAINNET…"
-        : "Sending taxed tx on devnet…"
-      : isMainnet
-      ? "Send taxed AKSOL (MAINNET)"
-      : "Send taxed AKSOL (devnet)"}
-  </button>
-</form>
+        <label className="field">
+          <span className="field-label">Amount (AKSOL)</span>
+          <input
+            type="number"
+            min="0"
+            step="0.0001"
+            placeholder="0.10"
+            value={amountUi}
+            onChange={(e) => setAmountUi(e.target.value)}
+          />
+        </label>
 
-      <small>
-        Backend builds a taxed transfer using the AKSOL program. Your wallet
-        signs and sends on{" "}
-        <strong>
-          {networkConfig.name === "devnet" ? "devnet" : "mainnet-beta"}
-        </strong>
-        .
+        <button type="submit" disabled={loading}>
+          {loading ? "Sending with tax…" : "Send with tax"}
+        </button>
+      </form>
+
+      {/* Helper text under form */}
+      <small
+        style={{
+          display: "block",
+          marginTop: "0.5rem",
+          fontSize: "0.75rem",
+          color: "#9ca3af",
+        }}
+      >
+        Backend constructs a taxed transfer, either broadcasting it directly or
+        returning a transaction for your wallet to sign. The AKSOL tax (3%) is
+        routed according to your on-chain config wallets.
       </small>
 
+      {/* Error status */}
       {error && <div className="status-error">Error: {error}</div>}
 
+      {/* Last transaction metadata */}
       {txSig && (
         <div className="tx-meta">
           <div className="tx-meta-label">
@@ -240,7 +273,7 @@ export default function TaxedSendCard({
           </div>
           <div className="wallet-overview-link">
             <a
-              href={`${explorerBase}/tx/${txSig}${clusterQuery}`}
+              href={`${explorerBaseUrl}/tx/${txSig}?cluster=${cluster}`}
               target="_blank"
               rel="noreferrer"
             >
@@ -250,6 +283,7 @@ export default function TaxedSendCard({
         </div>
       )}
 
+      {/* Public-mode investor note */}
       {publicMode && (
         <p
           style={{
@@ -258,11 +292,13 @@ export default function TaxedSendCard({
             color: "#9ca3af",
           }}
         >
-          <strong>Investor note:</strong> This card shows AKSOL&apos;s standard
-          taxed path (3% routed to protocol wallets). The 0% route card
-          represents special partner / on-ramp flows with no tax applied.
+          <strong>Investor note:</strong> On mainnet, this card represents the
+          standard AKSOL protocol tax path, while the 0% route card showcases
+          special partner / on-ramp flows.
         </p>
       )}
     </section>
   );
 }
+
+export default TaxedSendCard;
