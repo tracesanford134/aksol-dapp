@@ -7,7 +7,7 @@
     "website": "https://alaskacrypto.financial",
     "twitter": "https://x.com/AlaskaCryptoFin",
     "telegram": "https://t.me/aksolcommunity",
-    "netlify_dapp": "https://aksolappv1.netlify.app"
+    "netlify_dapp": "https://aksoldapp.netlify.app"
   },
   "tags": ["utility-token", "alaska", "defi", "solana"],
   "cluster": "mainnet-beta"
