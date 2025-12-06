@@ -1,7 +1,9 @@
 import { useMemo, useState } from "react";
 import "./App.css";
 import StatusCard from "./components/StatusCard";
+import PriceTickerBar from "./components/PriceTickerBar";
 import TaxedSendCard from "./components/TaxedSendCard";
+import StorefrontPurchaseCard from "./components/StorefrontPurchaseCard";
 import PurchaseCard from "./components/PurchaseCard";
 import WalletOverview from "./components/WalletOverview";
 import ActivityCard from "./components/ActivityCard";
@@ -133,7 +135,19 @@ function App() {
         </section>
       )}
 
-      {/* MAIN CARD GRID: Wallet + Activity on top, 3 cards on bottom */}
+      {/* Live SOL / AKSOL ticker bar */}
+      <PriceTickerBar isMainnet={isMainnet} />
+
+      {/* Storefront card sits directly under the market snapshot */}
+      <section className="storefront-wrapper">
+        <StorefrontPurchaseCard
+          isMainnet={isMainnet}
+          publicMode={publicMode}
+          logAction={logAction}
+        />
+      </section>
+
+      {/* MAIN CARD GRID: Wallet + Activity on top, core controls below */}
       <main className="card-grid">
         <WalletOverview />
         <ActivityCard actions={activities} />
