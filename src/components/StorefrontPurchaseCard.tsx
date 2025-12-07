@@ -6,6 +6,10 @@ type StorefrontPurchaseCardProps = {
   logAction: (label: string, signature?: string) => void;
 };
 
+// Backend base URL (local dev falls back to localhost)
+const BACKEND_BASE_URL =
+  import.meta.env.VITE_BACKEND_BASE_URL || "http://localhost:8080";
+
 // 🔧 TEMP ESTIMATE ONLY – update this to a better hint or wire to live price later.
 const EST_AKSOL_PER_SOL_HINT = 100000; // 1 SOL ≈ 100,000 AKSOL (example only)
 
@@ -22,8 +26,14 @@ const StorefrontPurchaseCard: React.FC<StorefrontPurchaseCardProps> = ({
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
+
     if (!isMainnet) {
       alert("Storefront purchases are only available on MAINNET.");
+      return;
+    }
+
+    if (!publicMode) {
+      alert("Switch to Public view to submit a storefront request.");
       return;
     }
 
@@ -32,13 +42,51 @@ const StorefrontPurchaseCard: React.FC<StorefrontPurchaseCardProps> = ({
       return;
     }
 
+    const parsedSol = parseFloat(solAmount);
+    if (!Number.isFinite(parsedSol) || parsedSol <= 0) {
+      alert("Please enter a valid positive SOL amount.");
+      return;
+    }
+
     setSubmitting(true);
     try {
-      // In this v1, we *only* log the intent.
-      // You’ll fulfill manually from the admin wallet.
+      // Fire the backend request so you get a reliable log
+      const body = {
+        fromPubkey: recipient,               // treat recipient as the customer wallet
+        amountSol: parsedSol,
+        estimatedAksol:
+          parsedSol > 0 ? parsedSol * EST_AKSOL_PER_SOL_HINT : null,
+        note: note.trim() || null,
+        cluster: "mainnet-beta",
+      };
+
+      const resp = await fetch(
+        `${BACKEND_BASE_URL}/aksol/storefront-purchase`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        }
+      );
+
+      const data = await resp.json().catch(() => ({} as any));
+
+      if (!resp.ok || !data.ok) {
+        const msg =
+          (data as any)?.error ||
+          `Storefront request failed (status ${resp.status}). Please try again or contact support.`;
+        console.error("Storefront purchase error:", data);
+        logAction("Storefront request failed (mainnet)");
+        alert(msg);
+        return;
+      }
+
+      // Frontend activity log
       logAction(
         `Storefront request: ${solAmount} SOL → AKSOL for ${recipient} (manual fulfillment)`
       );
+
+      // User-facing confirmation
       alert(
         "Storefront request recorded.\n\nYour order will be filled manually by the AKSOL team at fair market value."
       );
@@ -47,6 +95,10 @@ const StorefrontPurchaseCard: React.FC<StorefrontPurchaseCardProps> = ({
       setSolAmount("");
       setRecipient("");
       setNote("");
+    } catch (err) {
+      console.error("Error submitting storefront purchase:", err);
+      logAction("Storefront request error (mainnet)");
+      alert("Unexpected error submitting storefront request. Please try again.");
     } finally {
       setSubmitting(false);
     }
@@ -185,13 +237,15 @@ const StorefrontPurchaseCard: React.FC<StorefrontPurchaseCardProps> = ({
             <div className="storefront-summary">
               <p>
                 <strong>How this works:</strong> Your request is logged in the
-                AKSOL activity feed. The team fulfills it manually from the
-                official liquidity wallet at fair market value, then sends
-                AKSOL directly to your wallet.
+                AKSOL activity feed and on the backend. The team fulfills it
+                manually from the official liquidity wallet at fair market
+                value, then sends AKSOL directly to your wallet.
               </p>
               <p className="storefront-disclaimer">
                 You&apos;ll be able to{" "}
-                <span className="accent">verify everything on Solana Explorer</span>{" "}
+                <span className="accent">
+                  verify everything on Solana Explorer
+                </span>{" "}
                 once the transfer is complete.
               </p>
             </div>
