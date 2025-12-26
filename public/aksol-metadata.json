@@ -1,14 +1,16 @@
 {
   "name": "AKSOL",
   "symbol": "AKSOL",
-  "description": "AKSOL is the native token of the Alaska Crypto Financial ecosystem. It routes a portion of every taxed transfer to buyback, liquidity, and staking wallets to support long-term health and real-world use cases in Alaska.",
-  "image": "https://alaskacrypto.financial/aksol-logo.png",
-  "extensions": {
-    "website": "https://alaskacrypto.financial",
-    "twitter": "https://x.com/AlaskaCryptoFin",
-    "telegram": "https://t.me/aksolcommunity",
-    "netlify_dapp": "https://aksoldapp.netlify.app"
-  },
-  "tags": ["utility-token", "alaska", "defi", "solana"],
-  "cluster": "mainnet-beta"
+  "description": "AKSOL is the utility token powering Alaska Crypto Financial (ACF).",
+  "image": "https://aksoldapp.netlify.app/aksol_icon_512.png",
+  "external_url": "https://alaskacrypto.financial",
+  "properties": {
+    "category": "image",
+    "files": [
+      {
+        "uri": "https://aksoldapp.netlify.app/aksol_icon_512.png",
+        "type": "image/png"
+      }
+    ]
+  }
 }

@@ -5,7 +5,7 @@ export default defineConfig({
   plugins: [react()],
   server: {
     proxy: {
-      '/aksol': 'http://localhost:8080',
+      '/api': 'http://localhost:8080',
     },
   },
 });
