@@ -7,10 +7,7 @@
   "properties": {
     "category": "image",
     "files": [
-      {
-        "uri": "https://aksoldapp.netlify.app/aksol_icon_512.png",
-        "type": "image/png"
-      }
+      { "uri": "https://aksoldapp.netlify.app/aksol_icon_512.png", "type": "image/png" }
     ]
   }
 }
